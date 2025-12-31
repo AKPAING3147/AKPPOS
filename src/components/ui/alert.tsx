@@ -4,13 +4,13 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
+  "relative w-full rounded-none border-4 px-6 py-4 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*5)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-4 gap-y-1 items-start [&>svg]:size-5 [&>svg]:translate-y-0.5 [&>svg]:text-current font-mono shadow-[8px_8px_0px_0px_rgba(var(--shadow),1)] after:absolute after:left-0 after:top-0 after:bottom-0 after:w-2 after:bg-primary transition-all hover:-translate-y-1",
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
+        default: "bg-card text-card-foreground border-border after:bg-primary",
         destructive:
-          "text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+          "text-destructive bg-card border-destructive [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90 shadow-[8px_8px_0px_0px_rgba(var(--destructive),0.2)] after:bg-destructive",
       },
     },
     defaultVariants: {

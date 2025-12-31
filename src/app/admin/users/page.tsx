@@ -6,8 +6,20 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Users, Shield } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Plus, Search, Users, Shield, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface User {
     id: string;
@@ -23,6 +35,14 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
+    const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+    useEffect(() => {
+        if (alert) {
+            const timer = setTimeout(() => setAlert(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
 
     useEffect(() => {
         fetch('/api/users')
@@ -43,8 +63,33 @@ export default function UsersPage() {
         u.email.toLowerCase().includes(search.toLowerCase())
     );
 
+    const handleDelete = async (id: string) => {
+        try {
+            const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setUsers(users.filter(u => u.id !== id));
+                setAlert({ type: 'success', message: 'User deleted successfully' });
+            } else {
+                const data = await res.json();
+                setAlert({ type: 'error', message: data.error || 'Failed to delete user' });
+            }
+        } catch (error) {
+            setAlert({ type: 'error', message: 'Something went wrong' });
+        }
+    };
+
     return (
-        <div className="space-y-6 font-mono">
+        <div className="space-y-6 font-mono relative">
+            {/* Alert Notification */}
+            {alert && (
+                <div className="fixed top-24 right-8 z-[60] w-full max-w-md animate-in slide-in-from-right duration-300">
+                    <Alert variant={alert.type === 'error' ? 'destructive' : 'default'}>
+                        {alert.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                        <AlertDescription className="font-black">{alert.message.toUpperCase()}</AlertDescription>
+                    </Alert>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-center border-b-2 border-border pb-6">
                 <div>
@@ -100,6 +145,7 @@ export default function UsersPage() {
                                         <TableHead className="text-primary-foreground font-bold uppercase">Email</TableHead>
                                         <TableHead className="text-primary-foreground font-bold uppercase">Role</TableHead>
                                         <TableHead className="text-primary-foreground font-bold uppercase">Joined</TableHead>
+                                        <TableHead className="text-primary-foreground font-bold uppercase text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -125,6 +171,33 @@ export default function UsersPage() {
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground">
                                                     {new Date(u.createdAt).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-white hover:bg-destructive rounded-none">
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent className="border-4 border-border rounded-none bg-card font-mono">
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle className="text-2xl font-black uppercase tracking-tighter">Remove User?</AlertDialogTitle>
+                                                                <AlertDialogDescription className="font-bold uppercase text-muted-foreground">
+                                                                    Are you sure you want to delete <span className="text-foreground">"{u.name}"</span>?
+                                                                    This user will no longer be able to access the system.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter className="gap-2 pt-4">
+                                                                <AlertDialogCancel className="border-2 border-border rounded-none uppercase font-bold">Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    onClick={() => handleDelete(u.id)}
+                                                                    className="bg-destructive text-white rounded-none uppercase font-black hover:bg-destructive/90"
+                                                                >
+                                                                    Delete Account
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 </TableCell>
                                             </TableRow>
                                         ))

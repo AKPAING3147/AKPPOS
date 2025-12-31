@@ -7,8 +7,20 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
-import { Plus, Search, Package, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Package, AlertTriangle, Edit, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Product {
     id: string;
@@ -24,6 +36,14 @@ export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
+    const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+    useEffect(() => {
+        if (alert) {
+            const timer = setTimeout(() => setAlert(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
 
     useEffect(() => {
         fetch('/api/products')
@@ -38,8 +58,32 @@ export default function ProductsPage() {
         (p.barcode && p.barcode.includes(search))
     );
 
+    const handleDelete = async (id: string) => {
+        try {
+            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setProducts(products.filter(p => p.id !== id));
+                setAlert({ type: 'success', message: 'Product deleted' });
+            } else {
+                setAlert({ type: 'error', message: 'Failed to delete product' });
+            }
+        } catch (error) {
+            setAlert({ type: 'error', message: 'Something went wrong' });
+        }
+    };
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+            {/* Notifications */}
+            {alert && (
+                <div className="fixed top-24 right-8 z-[60] w-full max-w-sm animate-in slide-in-from-right duration-300">
+                    <Alert variant={alert.type === 'error' ? 'destructive' : 'default'}>
+                        {alert.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                        <AlertDescription className="font-black uppercase tracking-widest">{alert.message}</AlertDescription>
+                    </Alert>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -102,6 +146,7 @@ export default function ProductsPage() {
                                         <TableHead>Price</TableHead>
                                         <TableHead>Stock</TableHead>
                                         <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -138,6 +183,41 @@ export default function ProductsPage() {
                                                     <Badge variant={p.isActive ? 'default' : 'secondary'}>
                                                         {p.isActive ? 'Active' : 'Inactive'}
                                                     </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <Link href={`/admin/products/${p.id}/edit`}>
+                                                            <Button variant="outline" size="icon" className="h-8 w-8 border-2 border-border">
+                                                                <Edit className="w-4 h-4" />
+                                                            </Button>
+                                                        </Link>
+
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button variant="outline" size="icon" className="h-8 w-8 border-2 border-destructive text-destructive hover:bg-destructive hover:text-white transition-all">
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent className="border-4 border-border rounded-none font-mono">
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle className="uppercase font-black text-2xl">Delete Product?</AlertDialogTitle>
+                                                                    <AlertDialogDescription className="uppercase font-bold pt-2">
+                                                                        Are you sure you want to delete <span className="text-foreground">"{p.name}"</span>?
+                                                                        This action cannot be undone.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter className="pt-4">
+                                                                    <AlertDialogCancel className="border-2 border-border rounded-none uppercase font-bold">Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction
+                                                                        onClick={() => handleDelete(p.id)}
+                                                                        className="bg-destructive text-white rounded-none uppercase font-black hover:bg-destructive/90"
+                                                                    >
+                                                                        Confirm Delete
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))

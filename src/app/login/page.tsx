@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -101,9 +102,10 @@ export default function LoginPage() {
                             />
                         </div>
                         {error && (
-                            <div className="p-3 bg-red-100 border-2 border-red-500 text-red-600 font-bold text-sm uppercase">
-                                {error}
-                            </div>
+                            <Alert variant="destructive">
+                                <AlertCircle className="w-4 h-4" />
+                                <AlertDescription className="font-black uppercase">{error}</AlertDescription>
+                            </Alert>
                         )}
                         <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-black uppercase">
                             {loading ? <Loader2 className="mr-2 animate-spin" /> : t('signIn')}

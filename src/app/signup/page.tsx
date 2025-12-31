@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Store, Lock, Mail, User, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -220,9 +221,10 @@ export default function SignupPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="p-3 bg-red-100 border-2 border-red-500 text-red-600 font-bold text-sm uppercase">
-                                {error}
-                            </div>
+                            <Alert variant="destructive">
+                                <AlertCircle className="w-4 h-4" />
+                                <AlertDescription className="font-black uppercase">{error}</AlertDescription>
+                            </Alert>
                         )}
 
                         {/* Submit Button */}

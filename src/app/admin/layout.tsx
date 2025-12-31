@@ -100,12 +100,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-muted relative selection:bg-primary selection:text-primary-foreground">
+            <main className="flex-1 flex flex-col overflow-hidden bg-muted relative selection:bg-primary selection:text-primary-foreground">
                 {/* Dotted Grid Background */}
                 <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none"
                     style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
                 </div>
-                <div className="p-8 relative z-10">
+
+                {/* Top Bar */}
+                <header className="h-20 border-b-2 border-border bg-background/50 backdrop-blur-md flex items-center justify-between px-8 relative z-20">
+                    <div className="flex items-center gap-4">
+                        {!sidebarOpen && (
+                            <div className="flex items-center gap-2 md:hidden">
+                                <ShoppingCart className="w-6 h-6 text-primary" />
+                                <span className="font-black uppercase tracking-tighter">AKPPOS</span>
+                            </div>
+                        )}
+                        <h2 className="text-xl font-black uppercase tracking-tight hidden md:block">
+                            {pathname.split('/').pop() || 'Dashboard'}
+                        </h2>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="hidden sm:flex flex-col items-end">
+                            <span className="text-sm font-black uppercase tracking-tight">System Operator</span>
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Terminal_01 // Active</span>
+                        </div>
+                        <div className="w-10 h-10 border-2 border-border bg-card flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)]">
+                            <Users className="w-5 h-5" />
+                        </div>
+                    </div>
+                </header>
+
+                <div className="flex-1 overflow-auto p-8 relative z-10">
                     {children}
                 </div>
             </main>

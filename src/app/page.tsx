@@ -1,11 +1,9 @@
-import { ModeToggle } from '@/components/mode-toggle';
+import Navbar from '@/components/Navbar';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col items-center justify-center font-mono selection:bg-primary selection:text-primary-foreground">
-      <div className="absolute top-6 right-6 z-30">
-        <ModeToggle />
-      </div>
+      <Navbar />
 
       {/* Pixel Grid Background */}
       <div className="absolute inset-0 z-0 opacity-[0.03]"

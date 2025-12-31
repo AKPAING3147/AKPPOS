@@ -96,14 +96,19 @@ export async function POST(request: Request) {
         const hashedPassword = await bcrypt.hash(password, 12);
         console.log('Password hashed successfully');
 
-        // Create user (default role: STAFF, admins are created manually)
-        console.log('Creating user in DB...');
+        // Check if this is the first user in the system
+        // If it is, grant ADMIN role automatically
+        const userCount = await prisma.user.count();
+        const role = userCount === 0 ? Role.ADMIN : Role.STAFF;
+
+        // Create user
+        console.log(`Creating user in DB with role: ${role}...`);
         const user = await prisma.user.create({
             data: {
                 name: name.trim(),
                 email: email.toLowerCase().trim(),
                 password: hashedPassword,
-                role: Role.STAFF, // Default role
+                role: role,
             },
             select: {
                 id: true,

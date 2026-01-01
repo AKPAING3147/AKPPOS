@@ -1,19 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { getUserFromRequest } from '@/lib/tenant';
 
-async function getUser() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
-    const decoded = verifyToken(token) as any;
-    if (!decoded) return null;
-    return decoded;
-}
+export async function POST(request: NextRequest) {
+    const user = await getUserFromRequest(request);
 
-export async function POST(request: Request) {
-    const user = await getUser();
     if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -22,11 +13,29 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { items, paymentMethod, totalAmount, subTotal, tax, discount, customerName } = body;
 
-        // Validate stock first
+        if (!items || items.length === 0) {
+            return NextResponse.json({ error: 'Order must contain at least one item' }, { status: 400 });
+        }
+
+        // Validate stock and tenant ownership
         for (const item of items) {
-            const product = await prisma.product.findUnique({ where: { id: item.productId } });
-            if (!product || product.stock < item.quantity) {
-                return NextResponse.json({ error: `Insufficient stock for product ${product?.name}` }, { status: 400 });
+            const product = await prisma.product.findFirst({
+                where: {
+                    id: item.productId,
+                    tenantId: user.tenantId // Verify product belongs to tenant
+                }
+            });
+
+            if (!product) {
+                return NextResponse.json({
+                    error: `Product not found or does not belong to your organization`
+                }, { status: 404 });
+            }
+
+            if (product.stock < item.quantity) {
+                return NextResponse.json({
+                    error: `Insufficient stock for product ${product.name}`
+                }, { status: 400 });
             }
         }
 
@@ -34,6 +43,7 @@ export async function POST(request: Request) {
             const newOrder = await tx.order.create({
                 data: {
                     userId: user.id,
+                    tenantId: user.tenantId, // Auto-assign tenant
                     paymentMethod,
                     totalAmount,
                     subTotal,
@@ -71,7 +81,7 @@ export async function POST(request: Request) {
             return newOrder;
         });
 
-        return NextResponse.json(order);
+        return NextResponse.json(order, { status: 201 });
 
     } catch (error) {
         console.error('Order error:', error);
@@ -79,13 +89,16 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET() {
-    // Fetch orders (maybe filter by recent)
-    const user = await getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(request: NextRequest) {
+    const user = await getUserFromRequest(request);
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     try {
         const orders = await prisma.order.findMany({
+            where: { tenantId: user.tenantId }, // Filter by tenant
             orderBy: { createdAt: 'desc' },
             take: 50,
             include: { cashier: true, items: true },

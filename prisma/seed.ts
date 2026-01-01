@@ -9,10 +9,22 @@ const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
+    // Create or get default tenant
+    const tenant = await prisma.tenant.upsert({
+        where: { id: 'default-tenant-id' },
+        update: {},
+        create: {
+            id: 'default-tenant-id',
+            name: 'Demo Store',
+        },
+    })
+
+    console.log({ tenant })
+
     const adminEmail = 'admin@example.com'
     const adminPassword = await bcrypt.hash('admin123', 10)
 
-    // Upsert Admin
+    // Upsert Admin with tenant
     const admin = await prisma.user.upsert({
         where: { email: adminEmail },
         update: {},
@@ -21,12 +33,13 @@ async function main() {
             name: 'Admin User',
             password: adminPassword,
             role: Role.ADMIN,
+            tenantId: tenant.id,
         },
     })
 
     console.log({ admin })
 
-    // Seed Categories
+    // Seed Categories with tenant
     const categoriesData = [
         { name: 'Beverages' },
         { name: 'Food' },
@@ -35,11 +48,29 @@ async function main() {
 
     for (const c of categoriesData) {
         await prisma.category.upsert({
-            where: { name: c.name },
+            where: {
+                name_tenantId: {
+                    name: c.name,
+                    tenantId: tenant.id,
+                }
+            },
             update: {},
-            create: c,
+            create: {
+                ...c,
+                tenantId: tenant.id,
+            },
         })
     }
+
+    // Create default settings for tenant
+    await prisma.settings.upsert({
+        where: { tenantId: tenant.id },
+        update: {},
+        create: {
+            tenantId: tenant.id,
+            companyName: tenant.name,
+        },
+    })
 
     console.log('✅ Database seeded successfully!')
 }

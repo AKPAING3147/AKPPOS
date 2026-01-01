@@ -18,6 +18,19 @@ enum PaymentMethod {
   OTHER
 }
 
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  categories  Category[]
+  products    Product[]
+  orders      Order[]
+  settings    Settings?
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -26,15 +39,24 @@ model User {
   role      Role     @default(STAFF)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   orders    Order[]
 }
 
 model Category {
   id        String    @id @default(uuid())
-  name      String    @unique
+  name      String
   products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([name, tenantId])
 }
 
 model Product {
@@ -43,7 +65,7 @@ model Product {
   description   String?
   price         Decimal
   stock         Int            @default(0)
-  barcode       String?        @unique
+  barcode       String?
   image         String?
   isActive      Boolean        @default(true)
   categoryId    String
@@ -52,6 +74,11 @@ model Product {
   inventoryLogs InventoryLog[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([barcode, tenantId])
 }
 
 model Order {
@@ -68,12 +95,15 @@ model Order {
   items         OrderItem[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model OrderItem {
   id        String   @id @default(uuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
@@ -84,7 +114,7 @@ model OrderItem {
 model InventoryLog {
   id        String   @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   type      String
   quantity  Int
   reason    String?
@@ -93,7 +123,8 @@ model InventoryLog {
 
 model Settings {
   id            String   @id @default(uuid())
-  companyName   String   @default("MGYPOS")
+  // Company Name is now derived from Tenant, but display name can differ
+  companyName   String   @default("MGYPOS") 
   companyAddress String? @default("123 Business Street, City, State 12345")
   companyPhone  String?  @default("(555) 123-4567")
   companyEmail  String?
@@ -102,4 +133,7 @@ model Settings {
   currency      String   @default("USD")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  tenantId      String   @unique
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }

@@ -97,9 +97,45 @@ export async function POST(request: Request) {
         console.log('Password hashed successfully');
 
         // Check if this is the first user in the system
-        // If it is, grant ADMIN role automatically
         const userCount = await prisma.user.count();
-        const role = userCount === 0 ? Role.ADMIN : Role.STAFF;
+
+        let tenantId: string;
+        let role: Role;
+
+        if (userCount === 0) {
+            // First user: Create a new tenant and make them admin
+            console.log('First user detected - creating new tenant...');
+            const tenant = await prisma.tenant.create({
+                data: {
+                    name: `${name.trim()}'s Store`,
+                },
+            });
+
+            tenantId = tenant.id;
+            role = Role.ADMIN;
+
+            // Create default settings for the new tenant
+            await prisma.settings.create({
+                data: {
+                    tenantId: tenant.id,
+                    companyName: `${name.trim()}'s Store`,
+                },
+            });
+
+            console.log(`Created tenant: ${tenant.id}`);
+        } else {
+            // For now, assign to default tenant as STAFF
+            // TODO: Implement proper tenant invitation/selection system
+            const defaultTenant = await prisma.tenant.findFirst();
+            if (!defaultTenant) {
+                return NextResponse.json(
+                    { error: 'No tenant available. Please contact administrator.' },
+                    { status: 500 }
+                );
+            }
+            tenantId = defaultTenant.id;
+            role = Role.STAFF;
+        }
 
         // Create user
         console.log(`Creating user in DB with role: ${role}...`);
@@ -109,6 +145,7 @@ export async function POST(request: Request) {
                 email: email.toLowerCase().trim(),
                 password: hashedPassword,
                 role: role,
+                tenantId: tenantId,
             },
             select: {
                 id: true,

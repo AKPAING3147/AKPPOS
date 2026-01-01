@@ -1,25 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { getUserFromRequest } from '@/lib/tenant';
 import { Role } from '@prisma/client';
 
-async function getUser() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
-    const decoded = verifyToken(token) as any;
-    if (!decoded) return null;
-    return decoded;
-}
+export async function GET(request: NextRequest) {
+    // Get tenant context from JWT
+    const user = await getUserFromRequest(request);
 
-export async function GET(request: Request) {
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
     const search = searchParams.get('search');
 
     const where: any = {
         isActive: true,
+        tenantId: user.tenantId, // Filter by tenant
     };
 
     if (categoryId) {
@@ -46,10 +44,15 @@ export async function GET(request: Request) {
     }
 }
 
-export async function POST(request: Request) {
-    const user = await getUser();
-    if (!user || user.role !== Role.ADMIN) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+export async function POST(request: NextRequest) {
+    const user = await getUserFromRequest(request);
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.role !== Role.ADMIN) {
+        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     try {
@@ -64,6 +67,21 @@ export async function POST(request: Request) {
             );
         }
 
+        // Verify category belongs to same tenant
+        const category = await prisma.category.findFirst({
+            where: {
+                id: categoryId,
+                tenantId: user.tenantId
+            }
+        });
+
+        if (!category) {
+            return NextResponse.json(
+                { error: 'Category not found or does not belong to your organization' },
+                { status: 404 }
+            );
+        }
+
         const product = await prisma.product.create({
             data: {
                 name,
@@ -71,8 +89,9 @@ export async function POST(request: Request) {
                 price: parseFloat(price),
                 stock: parseInt(stock),
                 barcode: barcode || null,
-                image: image || null, // Convert empty string to null
+                image: image || null,
                 description: description || null,
+                tenantId: user.tenantId, // Auto-assign tenant
             },
         });
 
@@ -86,7 +105,7 @@ export async function POST(request: Request) {
             },
         });
 
-        return NextResponse.json(product);
+        return NextResponse.json(product, { status: 201 });
     } catch (error: any) {
         console.error('Product creation error:', error);
         return NextResponse.json(

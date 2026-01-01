@@ -1,27 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { verifyToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { getUserFromRequest } from '@/lib/tenant';
 import { Role } from '@prisma/client';
 
-async function getUser() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
-    const decoded = verifyToken(token) as any;
-    if (!decoded) return null;
-    return decoded;
-}
+export async function GET(request: NextRequest) {
+    const user = await getUserFromRequest(request);
 
-export async function GET(request: Request) {
-    const user = await getUser();
-    if (!user || user.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.role !== Role.ADMIN) {
+        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     try {
         const users = await prisma.user.findMany({
+            where: { tenantId: user.tenantId }, // Filter by tenant
             select: {
                 id: true,
                 name: true,
@@ -37,10 +33,15 @@ export async function GET(request: Request) {
     }
 }
 
-export async function POST(request: Request) {
-    const admin = await getUser();
-    if (!admin || admin.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+export async function POST(request: NextRequest) {
+    const admin = await getUserFromRequest(request);
+
+    if (!admin) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (admin.role !== Role.ADMIN) {
+        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     try {
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
             );
         }
 
-        // Check email
+        // Check if email already exists
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) {
             return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
@@ -62,12 +63,14 @@ export async function POST(request: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Create user in the same tenant as the admin
         const newUser = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
                 role: role as Role,
+                tenantId: admin.tenantId, // Auto-assign to admin's tenant
             },
             select: {
                 id: true,
@@ -80,6 +83,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json(newUser, { status: 201 });
     } catch (error) {
+        console.error('User creation error:', error);
         return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
     }
 }

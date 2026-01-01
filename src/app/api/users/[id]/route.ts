@@ -1,24 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
-
-async function getUser() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
-    const decoded = verifyToken(token) as any;
-    if (!decoded) return null;
-    return decoded;
-}
+import { getUserFromRequest } from '@/lib/tenant';
+import { Role } from '@prisma/client';
 
 export async function DELETE(
-    request: Request,
+    request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const admin = await getUser();
-    if (!admin || admin.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    const admin = await getUserFromRequest(request);
+
+    if (!admin) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (admin.role !== Role.ADMIN) {
+        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -29,11 +25,27 @@ export async function DELETE(
     }
 
     try {
+        // Verify user belongs to the same tenant before deleting
+        const userToDelete = await prisma.user.findFirst({
+            where: {
+                id,
+                tenantId: admin.tenantId
+            }
+        });
+
+        if (!userToDelete) {
+            return NextResponse.json({
+                error: 'User not found or does not belong to your organization'
+            }, { status: 404 });
+        }
+
         await prisma.user.delete({
             where: { id },
         });
+
         return NextResponse.json({ message: 'User deleted successfully' });
     } catch (error) {
+        console.error('User deletion error:', error);
         return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
     }
 }

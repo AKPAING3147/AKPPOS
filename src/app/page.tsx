@@ -26,7 +26,7 @@ export default function HomePage() {
 
             {/* Pixel Button */}
             <a
-              href="/login"
+              href="/signup"
               className="group relative inline-flex items-center justify-center px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg font-bold text-primary-foreground bg-primary border-2 border-border hover:bg-background hover:text-foreground transition-all duration-0 shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] sm:shadow-[6px_6px_0px_0px_rgba(var(--shadow),1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] sm:hover:translate-x-[6px] sm:hover:translate-y-[6px]"
             >
               <span>[ GET_STARTED ]</span>

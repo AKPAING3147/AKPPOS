@@ -33,8 +33,18 @@ export default function OrdersPage() {
     useEffect(() => {
         fetch('/api/orders')
             .then(res => res.json())
-            .then(data => setOrders(data))
-            .catch(console.error)
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setOrders(data);
+                } else {
+                    console.error('Failed to fetch orders:', data.error);
+                    setOrders([]);
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                setOrders([]);
+            })
             .finally(() => setLoading(false));
     }, []);
 

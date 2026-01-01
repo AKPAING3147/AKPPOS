@@ -57,11 +57,27 @@ export default function POSPage() {
                 ]);
                 const pData = await pRes.json();
                 const cData = await cRes.json();
-                setProducts(pData);
-                setCategories(cData);
+
+                // Validate responses are arrays
+                if (Array.isArray(pData)) {
+                    setProducts(pData);
+                } else {
+                    console.error('Products fetch error:', pData.error);
+                    setProducts([]);
+                    setAlert({ type: 'error', message: pData.error || 'Failed to load products' });
+                }
+
+                if (Array.isArray(cData)) {
+                    setCategories(cData);
+                } else {
+                    console.error('Categories fetch error:', cData.error);
+                    setCategories([]);
+                }
             } catch (e) {
                 console.error("Failed to fetch data", e);
                 setAlert({ type: 'error', message: 'Failed to load products' });
+                setProducts([]);
+                setCategories([]);
             } finally {
                 setLoading(false);
             }

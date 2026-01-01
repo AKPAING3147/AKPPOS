@@ -48,15 +48,28 @@ export default function ProductsPage() {
     useEffect(() => {
         fetch('/api/products')
             .then(res => res.json())
-            .then(data => setProducts(data))
-            .catch(console.error)
+            .then(data => {
+                // Check if response is an array (success) or error object
+                if (Array.isArray(data)) {
+                    setProducts(data);
+                } else if (data.error) {
+                    console.error('Failed to fetch products:', data.error);
+                    setAlert({ type: 'error', message: data.error });
+                    setProducts([]);
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                setAlert({ type: 'error', message: 'Failed to load products' });
+                setProducts([]);
+            })
             .finally(() => setLoading(false));
     }, []);
 
-    const filtered = products.filter(p =>
+    const filtered = Array.isArray(products) ? products.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         (p.barcode && p.barcode.includes(search))
-    );
+    ) : [];
 
     const handleDelete = async (id: string) => {
         try {

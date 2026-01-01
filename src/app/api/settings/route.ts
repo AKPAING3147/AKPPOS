@@ -1,26 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { getUserFromRequest } from '@/lib/tenant';
 import { Role } from '@prisma/client';
 
-async function getUser() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
-    const decoded = verifyToken(token) as any;
-    if (!decoded) return null;
-    return decoded;
-}
+export async function GET(request: NextRequest) {
+    const user = await getUserFromRequest(request);
 
-export async function GET() {
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
-        let settings = await prisma.settings.findFirst();
+        let settings = await prisma.settings.findUnique({
+            where: { tenantId: user.tenantId }
+        });
 
-        // Create default settings if none exist
+        // Create default settings for tenant if none exist
         if (!settings) {
             settings = await prisma.settings.create({
                 data: {
+                    tenantId: user.tenantId,
                     companyName: 'MGYPOS',
                     companyAddress: '123 Business Street, City, State 12345',
                     companyPhone: '(555) 123-4567',
@@ -37,18 +36,25 @@ export async function GET() {
     }
 }
 
-export async function PUT(request: Request) {
-    const user = await getUser();
-    if (!user || user.role !== Role.ADMIN) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+export async function PUT(request: NextRequest) {
+    const user = await getUserFromRequest(request);
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.role !== Role.ADMIN) {
+        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     try {
         const body = await request.json();
         const { companyName, companyAddress, companyPhone, companyEmail, companyLogo, taxRate, currency } = body;
 
-        // Get or create settings
-        let settings = await prisma.settings.findFirst();
+        // Get or create settings for this tenant
+        let settings = await prisma.settings.findUnique({
+            where: { tenantId: user.tenantId }
+        });
 
         if (settings) {
             // Update existing
@@ -65,9 +71,10 @@ export async function PUT(request: Request) {
                 },
             });
         } else {
-            // Create new
+            // Create new for this tenant
             settings = await prisma.settings.create({
                 data: {
+                    tenantId: user.tenantId,
                     companyName,
                     companyAddress,
                     companyPhone,

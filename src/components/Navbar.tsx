@@ -20,15 +20,15 @@ export default function Navbar() {
     ];
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b-4 border-border font-mono">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b-4 border-border font-mono">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-20 items-center">
+                <div className="flex justify-between h-16 sm:h-20 items-center">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 border-4 border-border bg-primary text-primary-foreground flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] group-hover:shadow-none group-hover:translate-x-1 group-hover:translate-y-1 transition-all">
-                            <ShoppingCart className="w-6 h-6" />
+                    <Link href="/" className="flex items-center gap-2 sm:gap-3 group z-50">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 sm:border-4 border-border bg-primary text-primary-foreground flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(var(--shadow),1)] sm:shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] group-hover:shadow-none group-hover:translate-x-1 group-hover:translate-y-1 transition-all">
+                            <ShoppingCart className="w-4 h-4 sm:w-6 sm:h-6" />
                         </div>
-                        <span className="text-2xl font-black uppercase tracking-tighter decoration-primary decoration-4 group-hover:underline">
+                        <span className="text-lg sm:text-2xl font-black uppercase tracking-tighter decoration-primary decoration-4 group-hover:underline">
                             AKPPOS
                         </span>
                     </Link>
@@ -64,48 +64,58 @@ export default function Navbar() {
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <div className="md:hidden flex items-center gap-4">
+                    <div className="md:hidden flex items-center gap-3 z-50">
                         <ModeToggle />
                         <button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="p-2 border-4 border-border bg-card shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+                            className="w-10 h-10 flex items-center justify-center border-2 border-border bg-background shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
                         >
-                            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Mobile Navigation */}
+            {/* Mobile Navigation Overlay */}
+            {isOpen && (
+                <div
+                    className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
+
+            {/* Mobile Navigation Menu */}
             <div className={cn(
-                "md:hidden absolute top-20 left-0 right-0 bg-background border-b-4 border-border p-6 space-y-4 transition-all overflow-hidden",
-                isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+                "md:hidden fixed top-16 sm:top-20 left-0 right-0 bg-background border-b-4 border-border transition-all duration-300 z-40",
+                isOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
             )}>
-                {navLinks.map((link) => (
-                    <Link
-                        key={link.name}
-                        href={link.href}
-                        onClick={() => setIsOpen(false)}
-                        className="block text-xl font-black uppercase tracking-tighter hover:text-primary"
-                    >
-                        {link.name}
-                    </Link>
-                ))}
-                <div className="pt-4 border-t-2 border-border space-y-4">
-                    <div className="flex justify-between items-center">
-                        <span className="font-bold uppercase text-sm">Language</span>
-                        <LanguageSwitcher />
+                <div className="p-6 space-y-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                    {navLinks.map((link) => (
+                        <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={() => setIsOpen(false)}
+                            className="block text-xl font-black uppercase tracking-tighter hover:text-primary border-b-2 border-border pb-3 transition-colors"
+                        >
+                            {link.name}
+                        </Link>
+                    ))}
+                    <div className="pt-4 border-t-4 border-border space-y-4">
+                        <div className="flex justify-between items-center pb-4">
+                            <span className="font-bold uppercase text-sm">Language</span>
+                            <LanguageSwitcher />
+                        </div>
+                        <Link href="/login" className="block w-full" onClick={() => setIsOpen(false)}>
+                            <Button variant="outline" className="w-full border-4 border-border font-black uppercase rounded-none shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1">
+                                Login
+                            </Button>
+                        </Link>
+                        <Link href="/signup" className="block w-full" onClick={() => setIsOpen(false)}>
+                            <Button className="w-full border-4 border-border font-black uppercase rounded-none shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1">
+                                Join Now
+                            </Button>
+                        </Link>
                     </div>
-                    <Link href="/login" className="block w-full">
-                        <Button variant="outline" className="w-full border-4 border-border font-black uppercase rounded-none">
-                            Login
-                        </Button>
-                    </Link>
-                    <Link href="/signup" className="block w-full">
-                        <Button className="w-full border-4 border-border font-black uppercase rounded-none">
-                            Join Now
-                        </Button>
-                    </Link>
                 </div>
             </div>
         </nav>

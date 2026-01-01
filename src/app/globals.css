@@ -3,13 +3,13 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -36,61 +36,88 @@
   --color-chart-5: var(--chart-5);
 }
 
+/* Windows 95 Light Theme */
 :root {
   --radius: 0rem;
-  --background: 0 0% 100%;
+  /* Classic Windows 95 gray (#C0C0C0) */
+  --background: 0 0% 75.3%;
   --foreground: 0 0% 0%;
+  /* Window content - white */
   --card: 0 0% 100%;
   --card-foreground: 0 0% 0%;
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 0%;
-  --primary: 0 0% 0%;
+  /* Classic Windows blue (#000080) */
+  --primary: 240 100% 25%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 96%;
+  /* Lighter gray for secondary */
+  --secondary: 0 0% 83%;
   --secondary-foreground: 0 0% 0%;
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 0 0% 96%;
+  /* Muted - slightly darker gray */
+  --muted: 0 0% 83%;
+  --muted-foreground: 0 0% 30%;
+  /* Accent - highlight gray */
+  --accent: 0 0% 75.3%;
   --accent-foreground: 0 0% 0%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 0%;
-  --input: 0 0% 0%;
-  --ring: 0 0% 0%;
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  /* Classic red */
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  /* Dark gray borders */
+  --border: 0 0% 50%;
+  --input: 0 0% 100%;
+  --ring: 240 100% 25%;
+  /* Windows 95 inspired charts */
+  --chart-1: 240 100% 25%;
+  --chart-2: 180 100% 25%;
+  --chart-3: 0 100% 50%;
+  --chart-4: 60 100% 50%;
+  --chart-5: 300 100% 25%;
   --shadow: 0, 0, 0;
+
+  /* Windows 95 3D effect colors */
+  --win95-highlight: 0 0% 100%;
+  --win95-light: 0 0% 87%;
+  --win95-face: 0 0% 75%;
+  --win95-shadow: 0 0% 50%;
+  --win95-dark-shadow: 0 0% 25%;
 }
 
+/* Windows 95 Dark Theme - slightly adjusted */
 .dark {
-  --background: 0 0% 0%;
+  /* Dark teal background */
+  --background: 180 100% 15%;
   --foreground: 0 0% 100%;
-  --card: 0 0% 0%;
+  /* Dark windows */
+  --card: 0 0% 20%;
   --card-foreground: 0 0% 100%;
-  --popover: 0 0% 0%;
+  --popover: 0 0% 20%;
   --popover-foreground: 0 0% 100%;
-  --primary: 0 0% 100%;
+  /* Lighter blue for dark mode */
+  --primary: 210 100% 60%;
   --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 15%;
+  --secondary: 0 0% 30%;
   --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 65%;
-  --accent: 0 0% 15%;
+  --muted: 0 0% 30%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 0 0% 35%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 100%;
-  --input: 0 0% 100%;
-  --ring: 0 0% 83%;
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --destructive: 0 100% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 60%;
+  --input: 0 0% 30%;
+  --ring: 210 100% 60%;
+  --chart-1: 210 100% 60%;
+  --chart-2: 180 100% 50%;
+  --chart-3: 0 100% 60%;
+  --chart-4: 60 100% 60%;
+  --chart-5: 300 100% 60%;
   --shadow: 255, 255, 255;
+
+  --win95-highlight: 0 0% 80%;
+  --win95-light: 0 0% 50%;
+  --win95-face: 0 0% 30%;
+  --win95-shadow: 0 0% 20%;
+  --win95-dark-shadow: 0 0% 10%;
 }
 
 @layer base {
@@ -99,6 +126,26 @@
   }
 
   body {
-    @apply bg-background text-foreground font-mono;
+    @apply bg-background text-foreground;
+    font-family: 'MS Sans Serif', 'Microsoft Sans Serif', Arial, sans-serif;
+  }
+
+  /* Windows 95 Button Style */
+  button,
+  .btn {
+    box-shadow:
+      inset -1px -1px 0 hsl(var(--win95-dark-shadow)),
+      inset 1px 1px 0 hsl(var(--win95-highlight)),
+      inset -2px -2px 0 hsl(var(--win95-shadow)),
+      inset 2px 2px 0 hsl(var(--win95-light));
+  }
+
+  button:active,
+  .btn:active {
+    box-shadow:
+      inset 1px 1px 0 hsl(var(--win95-dark-shadow)),
+      inset -1px -1px 0 hsl(var(--win95-highlight));
+    padding-left: 3px;
+    padding-top: 3px;
   }
 }

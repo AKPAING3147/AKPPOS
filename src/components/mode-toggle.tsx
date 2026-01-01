@@ -40,15 +40,15 @@ export function ModeToggle() {
                     <span className="sr-only">Toggle theme</span>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-2 border-border rounded-none shadow-[4px_4px_0px_0px_rgb(var(--shadow)/1)] bg-card">
-                <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer font-bold uppercase hover:bg-muted focus:bg-muted rounded-none text-foreground">
-                    Light
+            <DropdownMenuContent align="end" className="border-4 border-border rounded-none shadow-[6px_6px_0px_0px_rgba(var(--shadow),1)] bg-background min-w-[140px]">
+                <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer font-black uppercase hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-none text-foreground py-3 text-sm transition-all duration-0">
+                    LIGHT
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer font-bold uppercase hover:bg-muted focus:bg-muted rounded-none text-foreground">
-                    Dark
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer font-black uppercase hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-none text-foreground py-3 text-sm transition-all duration-0">
+                    DARK
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer font-bold uppercase hover:bg-muted focus:bg-muted rounded-none text-foreground">
-                    System
+                <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer font-black uppercase hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-none text-foreground py-3 text-sm transition-all duration-0">
+                    SYSTEM
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

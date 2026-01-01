@@ -2,10 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, ShoppingCart, LogOut, Menu, Settings, Users } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ShoppingCart, LogOut, Menu, Settings, Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -15,7 +15,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
     const { t } = useLanguage();
+
+    // Detect mobile and auto-close sidebar
+    useEffect(() => {
+        const checkMobile = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            if (mobile) {
+                setSidebarOpen(false);
+            }
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Close mobile sidebar when route changes
+    useEffect(() => {
+        if (isMobile) {
+            setSidebarOpen(false);
+        }
+    }, [pathname, isMobile]);
 
     const navItems = [
         { name: t('dashboard'), href: '/admin', icon: LayoutDashboard },
@@ -31,13 +54,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     return (
-        <div className="flex h-screen bg-background font-mono text-foreground">
+        <div className="flex h-screen bg-background font-mono text-foreground overflow-hidden">
+            {/* Mobile Overlay */}
+            {isMobile && sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <aside className={cn(
-                "bg-background border-r-2 border-border flex flex-col transition-all duration-0 z-10",
-                sidebarOpen ? "w-64" : "w-20"
+                "bg-background border-r-2 border-border flex flex-col transition-all duration-300 z-50",
+                isMobile
+                    ? cn(
+                        "fixed inset-y-0 left-0 w-64",
+                        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                    )
+                    : cn(sidebarOpen ? "w-64" : "w-20")
             )}>
-                <div className="p-6 border-b-2 border-border">
+                <div className="p-4 md:p-6 border-b-2 border-border">
                     <div className="flex items-center justify-between">
                         {sidebarOpen && (
                             <div className="flex items-center gap-3">
@@ -56,12 +92,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             onClick={() => setSidebarOpen(!sidebarOpen)}
                             className="p-2 hover:bg-accent border-2 border-transparent hover:border-border transition-all duration-0"
                         >
-                            <Menu className="w-5 h-5" />
+                            {isMobile && sidebarOpen ? (
+                                <X className="w-5 h-5" />
+                            ) : (
+                                <Menu className="w-5 h-5" />
+                            )}
                         </button>
                     </div>
                 </div>
 
-                <nav className="flex-1 px-3 py-4 space-y-2">
+                <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
                     {navItems.map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -73,28 +113,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     isActive
                                         ? "bg-primary text-primary-foreground border-border shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)]"
                                         : "text-foreground border-transparent hover:border-border hover:bg-accent hover:shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] hover:-translate-y-1",
-                                    !sidebarOpen && "justify-center px-2"
+                                    !sidebarOpen && !isMobile && "justify-center px-2"
                                 )}
                             >
                                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                                {sidebarOpen && <span>{item.name}</span>}
+                                {(sidebarOpen || isMobile) && <span>{item.name}</span>}
                             </Link>
                         );
                     })}
                 </nav>
 
                 <div className="p-3 border-t-2 border-border space-y-2">
-                    <div className="flex gap-2 justify-between items-center">
+                    <div className={cn(
+                        "flex gap-2 items-center",
+                        sidebarOpen || isMobile ? "justify-between" : "flex-col"
+                    )}>
                         <LanguageSwitcher />
                         <ModeToggle />
                     </div>
                     <Button
                         variant="ghost"
-                        className={cn("w-full gap-3 hover:bg-red-50 hover:text-red-600 border-2 border-transparent hover:border-red-600", !sidebarOpen && "justify-center")}
+                        className={cn(
+                            "w-full gap-3 hover:bg-red-50 hover:text-red-600 border-2 border-transparent hover:border-red-600",
+                            !sidebarOpen && !isMobile && "justify-center"
+                        )}
                         onClick={handleLogout}
                     >
                         <LogOut className="w-5 h-5 shrink-0" />
-                        {sidebarOpen && t('logout')}
+                        {(sidebarOpen || isMobile) && t('logout')}
                     </Button>
                 </div>
             </aside>
@@ -107,31 +153,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
 
                 {/* Top Bar */}
-                <header className="h-20 border-b-2 border-border bg-background/50 backdrop-blur-md flex items-center justify-between px-8 relative z-20">
-                    <div className="flex items-center gap-4">
-                        {!sidebarOpen && (
-                            <div className="flex items-center gap-2 md:hidden">
-                                <ShoppingCart className="w-6 h-6 text-primary" />
-                                <span className="font-black uppercase tracking-tighter">AKPPOS</span>
+                <header className="h-16 md:h-20 border-b-2 border-border bg-background/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 relative z-20">
+                    <div className="flex items-center gap-3 md:gap-4">
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="md:hidden p-2 hover:bg-accent border-2 border-transparent hover:border-border transition-all"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
+
+                        {/* Mobile Logo (when sidebar closed) */}
+                        {isMobile && !sidebarOpen && (
+                            <div className="flex items-center gap-2">
+                                <ShoppingCart className="w-5 h-5 text-primary" />
+                                <span className="font-black uppercase tracking-tighter text-sm">AKPPOS</span>
                             </div>
                         )}
-                        <h2 className="text-xl font-black uppercase tracking-tight hidden md:block">
+
+                        {/* Page Title */}
+                        <h2 className="text-base md:text-xl font-black uppercase tracking-tight hidden sm:block">
                             {pathname.split('/').pop() || 'Dashboard'}
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="hidden sm:flex flex-col items-end">
+                    <div className="flex items-center gap-2 md:gap-4">
+                        <div className="hidden lg:flex flex-col items-end">
                             <span className="text-sm font-black uppercase tracking-tight">System Operator</span>
                             <span className="text-[10px] font-bold text-muted-foreground uppercase">Terminal_01 // Active</span>
                         </div>
-                        <div className="w-10 h-10 border-2 border-border bg-card flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)]">
-                            <Users className="w-5 h-5" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 border-2 border-border bg-card flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)]">
+                            <Users className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-auto p-8 relative z-10">
+                <div className="flex-1 overflow-auto p-4 md:p-8 relative z-10">
                     {children}
                 </div>
             </main>

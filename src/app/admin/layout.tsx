@@ -90,7 +90,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         )}
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="p-2 hover:bg-accent border-2 border-transparent hover:border-border transition-all duration-0"
+                            className={cn(
+                                "w-10 h-10 flex items-center justify-center border-2 border-border transition-all duration-0",
+                                isMobile && sidebarOpen
+                                    ? "bg-red-500 text-white hover:bg-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
+                                    : "bg-background hover:bg-primary hover:text-primary-foreground shadow-[2px_2px_0px_0px_rgba(var(--shadow),1)] hover:shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)]"
+                            )}
                         >
                             {isMobile && sidebarOpen ? (
                                 <X className="w-5 h-5" />
@@ -155,10 +160,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {/* Top Bar */}
                 <header className="h-16 md:h-20 border-b-2 border-border bg-background/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 relative z-20">
                     <div className="flex items-center gap-3 md:gap-4">
-                        {/* Mobile Menu Button */}
+                        {/* Mobile Menu Button - Enhanced */}
                         <button
                             onClick={() => setSidebarOpen(true)}
-                            className="md:hidden p-2 hover:bg-accent border-2 border-transparent hover:border-border transition-all"
+                            className="md:hidden w-10 h-10 flex items-center justify-center border-2 border-border bg-background hover:bg-primary hover:text-primary-foreground shadow-[4px_4px_0px_0px_rgba(var(--shadow),1)] hover:shadow-[2px_2px_0px_0px_rgba(var(--shadow),1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-0"
                         >
                             <Menu className="w-5 h-5" />
                         </button>

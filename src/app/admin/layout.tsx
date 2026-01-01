@@ -1,8 +1,8 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, ShoppingCart, LogOut, Menu, Settings, Users, X } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ShoppingCart, Menu, Settings, Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
@@ -12,7 +12,6 @@ import { ModeToggle } from '@/components/mode-toggle';
 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-    const router = useRouter();
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
@@ -47,11 +46,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: t('users'), href: '/admin/users', icon: Users },
         { name: t('settings'), href: '/admin/settings', icon: Settings },
     ];
-
-    const handleLogout = async () => {
-        await fetch('/api/auth/logout', { method: 'POST' });
-        router.push('/login');
-    };
 
     return (
         <div className="flex h-screen bg-background font-mono text-foreground overflow-hidden">
@@ -136,17 +130,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <LanguageSwitcher />
                         <ModeToggle />
                     </div>
-                    <Button
-                        variant="ghost"
-                        className={cn(
-                            "w-full gap-3 hover:bg-red-50 hover:text-red-600 border-2 border-transparent hover:border-red-600",
-                            !sidebarOpen && !isMobile && "justify-center"
-                        )}
-                        onClick={handleLogout}
-                    >
-                        <LogOut className="w-5 h-5 shrink-0" />
-                        {(sidebarOpen || isMobile) && t('logout')}
-                    </Button>
                 </div>
             </aside>
 
